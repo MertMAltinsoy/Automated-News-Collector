@@ -1,8 +1,8 @@
 # Automated News Collector - Readme
 
-![Automated-News-Collector](docs/Daily-Updates-Image.png)
-![Automated-News-Collector](docs/Author-News-Image.png)
-![Automated-News-Collector](docs/Sheets-Ordering-Image.png)
+![Automated-News-Collector](./docs/Daily-Updates-Image.png)
+![Automated-News-Collector](./docs/Author-News-Image.png)
+![Automated-News-Collector](./docs/Sheets-Ordering-Image.png)
 
 This is a Python project designed to aggregate financial and economic news articles from various Turkish sources, with a focus on Finance. The project utilizes web scraping techniques to fetch and process articles and leverages Excel files for efficient data storage and daily updates.
 
