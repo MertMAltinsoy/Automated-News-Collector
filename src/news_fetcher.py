@@ -1,6 +1,34 @@
+from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
 import logging
+from datetime import datetime
+from src.config import SOURCE_MAP
+
+
+def convert_turkish_date_to_datetime(date_string):
+    """Convert a Turkish date string to a datetime object."""
+    # Map of Turkish month names to English
+    turkish_to_numeric_months = {
+        'Ocak': '01',
+        'Şubat': '02',
+        'Mart': '03',
+        'Nisan': '04',
+        'Mayıs': '05',
+        'Haziran': '06',
+        'Temmuz': '07',
+        'Ağustos': '08',
+        'Eylül': '09',
+        'Ekim': '10',
+        'Kasım': '11',
+        'Aralık': '12'
+    }
+    # Split the date string into day, month, and year
+    day, month, year = date_string.split()
+    # Convert the Turkish month name to Numeric
+    month = turkish_to_numeric_months[month]
+    # Combine the day, month, and year into a new date string
+    return f"{day}-{month}-{year[2:]}"
 
 
 def get_soup(url):
@@ -15,20 +43,281 @@ def get_soup(url):
     return BeautifulSoup(response.content, 'html.parser')
 
 
-def parse_reuters(soup):
-    """Parse the HTML of the Reuters finance page."""
-    news_items = soup.find_all('li', class_=['story-collection__story__LeZ29', 'story-collection__hero__2gK6-'])
+# Parser functions for each news site
+def parse_hurriyet(soup):
+    """Parse the HTML of Hurriyet's page."""
+    news_items = soup.find_all('div', class_='highlighted-box mb20')
     articles = []
     for news_item in news_items:
-        title_tag = news_item.find('h3')
-        if title_tag:
+        title_tag = news_item.find('a', class_='title title-news-detail')
+        date_tag = news_item.find('div', class_='date')
+        link_tag = news_item['data-article-link']
+        if title_tag and date_tag and link_tag:
             title = title_tag.text
-            link = "https://www.reuters.com" + news_item.find('a')['href']
-            articles.append((title, link))
+            link = "https://www.hurriyet.com.tr" + link_tag
+            date_string = date_tag.text
+            # Split the date string by space and remove the time part
+            date_parts = date_string.split()
+            date_without_time = " ".join(date_parts[:-1])
+            # Convert the Turkish date to a datetime object
+            date = convert_turkish_date_to_datetime(date_without_time)
+            articles.append((title, link, date))
     return articles
 
 
-def parse_nagehan_alci(soup):
+def parse_sabah(soup):
+    """Parse the HTML of Sabah's page."""
+    news_items = soup.find('div', class_='col-sm-12 view20').find_all('div', class_='col-sm-12')
+    articles = []
+    for news_item in news_items:
+        title_tag = news_item.find('strong', class_='postCaption')
+        link_tag = news_item.find('a', href=True)
+        date_tag = news_item.find('span', class_='postTime')
+        if title_tag and link_tag and date_tag:
+            title = title_tag.text
+            link = "https://www.sabah.com.tr" + link_tag['href']
+            date_string = date_tag.text.split()[:-1]  # Exclude the day of the week
+            date = convert_turkish_date_to_datetime(" ".join(date_string))
+            articles.append((title, link, date))
+    return articles
+
+
+def parse_sozcu(soup):
+    """Parse the HTML of Sozcu's page."""
+    news_items = soup.find('div', class_='col-lg-8').find_all('a', class_='archive-item')
+    articles = []
+    for news_item in news_items:
+        title_tag = news_item.find('span', class_='title')
+        date_tag = news_item.find('span', class_='date')
+        link_tag = news_item['href']
+        if title_tag and date_tag and link_tag:
+            title = title_tag.text
+            link = link_tag
+            date = convert_turkish_date_to_datetime(date_tag.text)
+            articles.append((title, link, date))
+    return articles
+
+
+def parse_ekonomim(soup):
+    """Parse the HTML of Ekonomim's page."""
+    news_items = soup.find('div', class_='col-12 col-lg mw0 author-article_list').find_all('div', class_='left-side')
+    articles = []
+    for news_item in news_items:
+        title_tag = news_item.find('a')
+        date_tag = news_item.find('span', class_='date')
+        if title_tag and date_tag:
+            title = title_tag.text
+            link = title_tag['href']
+            date = convert_turkish_date_to_datetime(date_tag.text)
+            articles.append((title, link, date))
+    return articles
+
+
+def parse_10haber(soup):
+    """Parse the HTML of 10haber's page."""
+    news_items = soup.find_all('p', class_='card-text')
+    articles = []
+    for news_item in news_items:
+        # Split the text into date and title
+        date_and_title = news_item.text.split(' - ', 1)
+        if len(date_and_title) == 2:
+            date_string, title = date_and_title
+            # Convert the Turkish date string to a datetime object
+            date = convert_turkish_date_to_datetime(date_string)
+            # Get the link
+            link = news_item.find('a')['href']
+            articles.append((title, link, date))
+    return articles
+
+
+def parse_gazeteoksijen(soup):
+    """Parse the HTML of GazeteOksijen's page."""
+    news_items = soup.find_all('div', class_='col-12 col-md-6')
+    articles = []
+    for news_item in news_items:
+        title_tag = news_item.find('h5', class_='card-title fs-3')
+        link_tag = title_tag.find('a', href=True)
+        date_tag = news_item.find('span', class_='fs-7')
+        if title_tag and link_tag and date_tag:
+            title = title_tag.text.strip()
+            link = link_tag['href']
+            date_string = date_tag.text
+            date = convert_turkish_date_to_datetime(date_string)
+            articles.append((title, link, date))
+
+    return articles
+
+
+def parse_mahfiegilmez(soup):
+    """Parse the HTML of MahfiEğilmez's page."""
+    articles = []
+    # Parse the top news
+    top_news_item = soup.find('article', class_='post')
+    if top_news_item:
+        title_tag = top_news_item.find('h3', class_='post-title')
+        date_tag = top_news_item.find('span', class_='byline post-timestamp')
+        link_tag = top_news_item.find('a', class_='timestamp-link')
+        if title_tag and date_tag and link_tag:
+            title = title_tag.text.strip()
+            date = date_tag.text.strip("")
+            link = link_tag['href']
+            # Adjust the date format and convert it to 'dd-mm-yyyy' format
+            date_parts = date.replace(",", "").split()
+            date = f"{date_parts[1]} {date_parts[0]} {date_parts[2]}"
+            date = convert_turkish_date_to_datetime(date)
+            articles.append((title, link, date))
+
+    # Parse the rest of the news
+    news_items = soup.find_all('article', class_='post-outer-container')
+    for news_item in news_items:
+        title_tag = news_item.find('h3', class_='post-title')
+        date_tag = news_item.find('span', class_='byline post-timestamp')
+        link_tag = news_item.find('a', class_='timestamp-link')
+        if title_tag and date_tag and link_tag:
+            title = title_tag.text.strip()
+            date = date_tag.text.strip()
+            link = link_tag['href']
+            # Adjust the date format and convert it to 'dd-mm-yyyy' format
+            date_parts = date.replace(",", "").split()
+            date = f"{date_parts[1]} {date_parts[0]} {date_parts[2]}"
+            date = convert_turkish_date_to_datetime(date)
+            articles.append((title, link, date))
+    return articles
+
+
+def parse_haberturk(soup):
+    """Parse the HTML of HaberTürk's page."""
+    news_items = soup.find_all('li', {'class': 'mb-16 pb-8 border-b dark:border-gray-800'})
+
+    articles = []
+    for item in news_items:
+        title_element = item.find('h3', {'class': 'text-2xl max-w-lg mb-3 font-black'})
+        link_element = item.select_one('a.block')
+        date_element = item.find('time')
+
+        if title_element and link_element and date_element:
+            title = title_element.text.strip()
+            link = 'https://www.haberturk.com' + link_element['href']
+            date_str = date_element.text.strip().replace('Güncelleme: ', '')
+
+            # Remove leading and trailing spaces
+            date_str = date_str.strip()
+
+            # Parse the date string and reformat it
+            date = datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
+            formatted_date = date.strftime('%d-%m-%y')
+
+            articles.append((title, link, formatted_date))
+
+    return articles
+
+
+def parse_yetkinreport(soup):
+    """Parse the HTML of Yetkinreport's page."""
+    articles = []
+    # Parse the top news
+    top_news_items = soup.find_all('div', class_='kl-blog-item-container')
+    for item in top_news_items:
+        title_and_link_tag = item.find('h3', class_='itemTitle kl-blog-item-title').find('a', href=True)
+        if title_and_link_tag:
+            title = title_and_link_tag.text.strip()  # Extract the title from the text of the a tag
+            link = title_and_link_tag['href']  # Extract the link from the href attribute of the a tag
+            # Parse the URL and extract the date
+            url_parts = urlparse(link)
+            path_parts = url_parts.path.strip("/").split("/")
+            if len(path_parts) >= 3:
+                year, month, day = path_parts[:3]
+                date = f"{day}-{month}-{year[2:]}"
+                articles.append((title, link, date))
+    return articles
+
+
+def parse_perspektif(soup):
+    """Parse the HTML of Perspektif's page."""
+    news_items = soup.find_all('div', class_=['box', 'three', 'small', 'box'])
+    articles = []
+    for news_item in news_items:
+        title_tag = news_item.find('meta', itemprop='name')
+        link_tag = news_item.find('meta', itemprop='url')
+        date_tag = news_item.find('meta', itemprop='datePublished')
+
+        if title_tag and link_tag and date_tag:
+            title = title_tag['content']
+            link = link_tag['content']
+            date_str = date_tag['content']
+
+            # Parse the date string and reformat it
+            formatted_date = convert_turkish_date_to_datetime(date_str)
+
+            articles.append((title, link, formatted_date))
+
+    return articles
+
+
+def parse_paraanaliz(soup):
+    """Parse the HTML of Paraanaliz's page."""
+    news_items = soup.find_all('li')
+    articles = []
+    for news_item in news_items:
+        h2_tag = news_item.find('h2')
+        if h2_tag is not None:
+            title_tag = h2_tag.find('a')
+            date_tag = news_item.find('span', class_='yzr_dgr_trh')
+            if title_tag and date_tag:
+                title = title_tag.text
+                link = title_tag['href']
+                date = convert_turkish_date_to_datetime(date_tag.text)
+                articles.append((title, link, date))
+    return articles
+
+
+def parse_ugurses(soup):
+    """Parse the HTML of Ugur Gurses's page."""
+    news_items = soup.find('article')
+    articles = []
+    title_tag = news_items.find('h2', class_='entry-title').find('a')
+    link_tag = title_tag
+    date_tag = news_items.find('span', class_='posted-on').find('time', class_='entry-date published')
+    if title_tag and link_tag and date_tag:
+        title = title_tag.text
+        link = link_tag['href']
+        date = datetime.strptime(date_tag['datetime'].split('T')[0], '%Y-%m-%d')
+        date = date.strftime('%d-%m-%y')  # format the date as 'dd-mm-yy'
+        articles.append((title, link, date))
+    return articles
+
+
+parsers = {
+    'parse_hurriyet': parse_hurriyet,
+    'parse_sabah': parse_sabah,
+    'parse_sozcu': parse_sozcu,
+    'parse_ekonomim': parse_ekonomim,
+    'parse_10haber': parse_10haber,
+    'parse_gazeteoksijen': parse_gazeteoksijen,
+    'parse_mahfiegilmez': parse_mahfiegilmez,
+    'parse_haberturk': parse_haberturk,
+    'parse_yetkinreport': parse_yetkinreport,
+    'parse_perspektif': parse_perspektif,
+    'parse_paraanaliz': parse_paraanaliz,
+    'parse_ugurses': parse_ugurses
+}
+
+
+def fetch_news(source):
+    """Fetch news from a specific source."""
+    if source in SOURCE_MAP:
+        url = SOURCE_MAP[source]["url"]
+        parser = parsers[SOURCE_MAP[source]["parser"]]
+        soup = get_soup(url)
+        articles = parser(soup)
+        logging.debug(f"Fetched {len(articles)} articles from {source}.")
+        return articles
+    else:
+        logging.error(f"Unknown source: {source}")
+        return []
+
+
+def parse_nagehan_alci(soup):  # Not used
     """Parse the HTML of Nagehan Alçı's page."""
     news_items = soup.find_all('li', class_=['w-full border-dotted mb-5 pb-5 border-b dark:border-gray-800'])
     articles = []
@@ -43,7 +332,7 @@ def parse_nagehan_alci(soup):
     return articles
 
 
-def parse_dilek_gungor(soup):
+def parse_dilek_gungor(soup):  # Not used
     """Parse the HTML of Dilek Güngör's page."""
     target_div = soup.find('div', class_='col-sm-12 view20')
     news_items = target_div.find_all('div', class_='col-sm-12')
@@ -58,7 +347,7 @@ def parse_dilek_gungor(soup):
     return articles
 
 
-def parse_deniz_zeyrek(soup):
+def parse_deniz_zeyrek(soup):  # Not used
     """Parse the HTML of Deniz Zeyrek's page."""
     news_items = soup.find('div', class_='col-lg-8').find_all('a', class_='archive-item')
     articles = []
@@ -73,7 +362,7 @@ def parse_deniz_zeyrek(soup):
     return articles
 
 
-def parse_sant_manukyan(soup):
+def parse_sant_manukyan(soup):  # Not used
     """Parse the HTML of Sant Manukyan's page."""
     news_items = soup.find('div', class_='col-12 col-lg mw0 author-article_list').find_all('div', class_='left-side')
     articles = []
@@ -86,63 +375,22 @@ def parse_sant_manukyan(soup):
     return articles
 
 
-def fetch_news(source):
-    """Fetch news from a specific source."""
-    if source == "Reuters-Finance":
-        url = "https://www.reuters.com/business/finance/"
-        soup = get_soup(url)
-        articles = parse_reuters(soup)
-    elif source == "Nagehan-Alci":
-        url = "https://www.haberturk.com/htyazar/nagehan-alci"
-        soup = get_soup(url)
-        articles = parse_nagehan_alci(soup)
-    elif source == "Dilek-Gungor":
-        url = "https://www.sabah.com.tr/yazarlar/dilek-gungor/arsiv?getall=true"
-        soup = get_soup(url)
-        articles = parse_dilek_gungor(soup)
-    elif source == "Deniz-Zeyrek":
-        url = "https://www.sozcu.com.tr/kategori/yazarlar/deniz-zeyrek/?utm_source=yazardetay&utm_medium=free" \
-              "&utm_campaign=yazar_tumyazilar "
-        soup = get_soup(url)
-        articles = parse_deniz_zeyrek(soup)
-    elif source == "Sant-Manukyan":
-        url = "https://www.ekonomim.com/yazar/sant-manukyan/163"
-        soup = get_soup(url)
-        articles = parse_sant_manukyan(soup)
-    elif source == "Bloomberg-Markets-Economics":  # Not used
-        urls = ["https://www.bloomberg.com/markets", "https://www.bloomberg.com/economics"]
-        articles_markets = []
-        articles_economics = []
-        for url in urls:
-            soup = get_soup(url)
-            if url.endswith("markets"):
-                articles_markets = parse_bloomberg_markets(soup)
-            elif url.endswith("economics"):
-                articles_economics = parse_bloomberg_economics(soup)
-        # Interleave the articles from the two sources
-        articles = [article for pair in zip(articles_markets, articles_economics) for article in pair]
-
-        # If one source has more articles than the other, append the remaining articles
-        if len(articles_markets) > len(articles_economics):
-            articles.extend(articles_markets[len(articles_economics):])
-        elif len(articles_economics) > len(articles_markets):
-            articles.extend(articles_economics[len(articles_markets):])
-
-        # Remove duplicates while maintaining order
-        articles = [article for i, article in enumerate(articles) if article not in articles[:i]]
-    elif source == "Bloomberg-AI":  # Not used
-        url = "https://www.bloomberg.com/ai"
-        soup = get_soup(url)
-        articles = parse_bloomberg_ai(soup)
-
-    logging.debug(f"Fetched {len(articles)} articles from {source}.")
+def parse_reuters(soup):  # Not used
+    """Parse the HTML of the Reuters finance page."""
+    news_items = soup.find_all('li', class_=['story-collection__story__LeZ29', 'story-collection__hero__2gK6-'])
+    articles = []
+    for news_item in news_items:
+        title_tag = news_item.find('h3')
+        if title_tag:
+            title = title_tag.text
+            link = "https://www.reuters.com" + news_item.find('a')['href']
+            articles.append((title, link))
     return articles
 
 
 def parse_bloomberg_markets(soup):  # Not used, Not included in prod. due to CAPTCHA issues
     """Parse the HTML of the Bloomberg Markets page."""
     articles = []
-    print(soup)
     # Parse the big news item
     big_news_item = soup.find('div', attrs={'class': 'hover:underline focus:underline', 'data-component': 'headline'})
     if big_news_item:
@@ -163,7 +411,7 @@ def parse_bloomberg_markets(soup):  # Not used, Not included in prod. due to CAP
     return articles
 
 
-def parse_bloomberg_economics(soup):
+def parse_bloomberg_economics(soup):  # Not used
     """Parse the HTML of the Bloomberg Economics page."""
     articles = []
 
@@ -188,7 +436,7 @@ def parse_bloomberg_economics(soup):
     return articles
 
 
-def parse_bloomberg_ai(soup):
+def parse_bloomberg_ai(soup):  # Not used
     """Parse the HTML of the Bloomberg AI page."""
     articles = []
 

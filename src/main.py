@@ -1,42 +1,78 @@
-import time
+import datetime
 import logging
 import os
+import openpyxl
 from news_fetcher import fetch_news
 from excel_writer import save_articles
-from utils import load_past_articles, save_past_articles, get_last_reset_time, update_last_reset_time, \
-    Up_To_Date_NEWS_FILE, PAST_ARTICLES_FILE, SOURCES
+from src.config import SOURCES, Up_To_Date_NEWS_FILE
+from utils import load_past_articles, save_past_articles
+
+# Configure the logging system
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+
+def is_new_day(current_date, last_reset_date):
+    """Check if the current date is a new day."""
+    return current_date != last_reset_date
+
+
+def reset_daily_updates_sheet(workbook, sheet_name):
+    """Reset the 'Daily-Updates' sheet because a new day has started."""
+    logging.info(f"Resetting the 'Daily-Updates' sheet because a new day has started.")
+    del workbook[sheet_name]
+    workbook.save(Up_To_Date_NEWS_FILE)
+
+
+def process_articles(source, past_articles):
+    """Fetch and process new articles for a given source."""
+    current_articles = fetch_news(source)
+    new_articles = [article for article in current_articles if
+                    (article[1], article[2]) not in past_articles.get(source, set())]
+
+    if new_articles:
+        logging.info(f"Found {len(new_articles)} new articles from {source}.")
+        save_articles(new_articles, source)
+        # Update the past articles with the current articles
+        past_articles[source] = set((article[1], article[2]) for article in current_articles)
+        # Add the new articles published today to the daily updates articles
+        current_date = datetime.datetime.now().strftime("%d-%m-%y")
+        daily_updates_articles = [(source, article[0], article[1]) for article in new_articles if article[2] == current_date]
+        return daily_updates_articles
+    else:
+        logging.info(f"No new articles found from {source}.")
+        return []
 
 
 def main():
     """Main function."""
-    # Check for reset condition and perform reset if necessary
-    last_reset_time = get_last_reset_time()
-    if time.time() - last_reset_time > 36 * 60 * 60:
-        logging.info(f"Resetting the Excel file because the last reset time is more than 36 hours ago.")
-        # Reset the Excel File
-        if os.path.exists(Up_To_Date_NEWS_FILE):
-            os.remove(Up_To_Date_NEWS_FILE)
-        # Reset the Past Articles File
-        if os.path.exists(PAST_ARTICLES_FILE):
-            os.remove(PAST_ARTICLES_FILE)
-        update_last_reset_time()
+    # Get the current date
+    current_date = datetime.datetime.now().strftime("%d-%m-%y")
+
+    # Check if the Excel file exists
+    if os.path.exists(Up_To_Date_NEWS_FILE):
+        # If the file exists, load it
+        workbook = openpyxl.load_workbook(Up_To_Date_NEWS_FILE)
+        # Get the name of the first sheet and extract the date from it
+        first_sheet_name = workbook.sheetnames[0]
+        last_reset_date = first_sheet_name.split("Daily-Updates-")[-1]
+        if is_new_day(current_date, last_reset_date):
+            reset_daily_updates_sheet(workbook, first_sheet_name)
 
     # Fetch news from each source and save new articles
     past_articles = load_past_articles()
-    for source in SOURCES:  # Add more sources as needed
-        current_articles = fetch_news(source)
-        new_articles = [article for article in current_articles if
-                        article[1] not in past_articles.get(source, set())]
+    daily_updates_articles = []
 
-        if new_articles:
-            logging.info(f"Found {len(new_articles)} new articles from {source}.")
-            save_articles(new_articles, source)
-            # Update the past articles with the current articles
-            past_articles[source] = set(article[1] for article in current_articles)
-        else:
-            logging.info(f"No new articles found from {source}.")
+    for source in SOURCES:
+        daily_updates_articles.extend(process_articles(source, past_articles))
+
     save_past_articles(past_articles)
+    # Save the daily updates articles to the daily updates sheet
+    daily_updates_articles = [(author.replace('-', ' '), title, link) for author, title, link in daily_updates_articles]
+    save_articles(daily_updates_articles, f"Daily-Updates-{current_date}")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        logging.exception(f"An unexpected error occurred: {e}")
