@@ -10,6 +10,8 @@ The Automated-News-Collector is a Python-based project designed to scrape news a
 </p>
 
 ![Automated-News-Collector](./docs/Daily-Updates-Image.png)
+![Automated-News-Collector](./docs/Author-News-Image.png)
+![Automated-News-Collector](./docs/Sheets-Ordering-Image.png)
 
 ## Table of Contents
 1. [Workflow Overview](#workflow-overview)
@@ -61,8 +63,6 @@ The `config.py` file also contains the configurations for the news sources. Ther
 
 3. `SOURCE_MAP`: A dictionary mapping each source name to a URL and a parser function. The URL is a string representing the URL of the news source's author page. The parser function is a string representing the name of the parser function to be used for this news source.
 
-![Automated-News-Collector](./docs/Author-News-Image.png)
-
 ## Adding New Sources
 
 When adding a new source, make sure to:
@@ -72,8 +72,6 @@ When adding a new source, make sure to:
 - Add a URL and a parser function for the source to the `SOURCE_MAP` dictionary.
 
 The parser function must be defined in the `news_fetcher.py` file and its name must be included in the `parsers` dictionary in the same file.
-
-![Automated-News-Collector](./docs/Sheets-Ordering-Image.png)
 
 ## Error Handling
 
