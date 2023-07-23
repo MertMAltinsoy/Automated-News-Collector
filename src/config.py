@@ -1,8 +1,35 @@
 # config.py
 import os
-from src.utils import DATA_DIR
+from utils import DATA_DIR
+
 """
-Configuration for Automated-News-Collector:
+Configuration for the Excel file save location:
+
+This script provides two options for saving the Excel file: on your desktop or in the 'data' directory of the project.
+
+- DESKTOP_DIR: This is the path to your desktop. It's determined automatically based on your operating system.
+
+- SAVE_ON_DESKTOP: This is a boolean variable. If it's set to True, the Excel file will be saved on your desktop. If 
+it's set to False, the file will be saved in the 'data' directory of the project. 
+
+- Up_To_Date_NEWS_FILE: This is the path where the Excel file will be saved. It's determined based on the value of 
+SAVE_ON_DESKTOP. 
+
+To change the save location, simply change the value of SAVE_ON_DESKTOP and run the script again.
+"""
+
+# Path to your desktop
+DESKTOP_DIR = os.path.join(os.path.expanduser("~"), "Desktop")
+
+# Boolean variable to choose the save location: True for desktop, False for data directory
+SAVE_ON_DESKTOP = True
+
+# Path to the Excel file
+Up_To_Date_NEWS_FILE = os.path.join(DESKTOP_DIR, 'Up_To_Date_NEWS.xlsx') if SAVE_ON_DESKTOP else os.path.join(DATA_DIR, 'Up_To_Date_NEWS.xlsx')
+
+
+"""
+Configuration for Automated-News-Collector Sources:
 
 This file contains three main structures that are used throughout the Automated-News-Collector project: SOURCES, 
 COLORS, and SOURCE_MAP. 
@@ -19,7 +46,7 @@ function to be used for this news source.
 When adding a new source, make sure to: [!!!!!!!!!! ATTENTION !!!!!!!!!!!]
 
 - Add the source name to the SOURCES list.
-- Add a color code for the source to the COLORS dictionary.
+- Add a color code for the source to the COLORS dictionary. [hexadecimal] (Default = Black, If not defined)
 - Add a URL and a parser function for the source to the SOURCE_MAP dictionary.
 
 The parser function must be defined in the 'news_fetcher.py' file and its name must be included in the 'parsers' 
@@ -27,16 +54,7 @@ dictionary in the same file.
 
 Please ensure that all entries are correctly formatted and that all source names are consistent across the three 
 structures.
-
-4. Up_To_Date_NEWS_FILE: This is the path where the output Excel file, 'Up_To_Date_NEWS.xlsx', will be saved. 
-   By default, it is saved in a directory named 'data' in the project root directory. 
-   If you want to change the output location, replace 'DATA_DIR' with your desired directory path.
-   If the directory does not exist, the script will create it during execution. 
-
 """
-
-#
-Up_To_Date_NEWS_FILE = os.path.join(DATA_DIR, 'Up_To_Date_NEWS.xlsx')
 
 # List of sources to scrape
 SOURCES = [
@@ -93,7 +111,8 @@ SOURCE_MAP = {
         "parser": "parse_10haber",
     },
     "Deniz-Zeyrek": {
-        "url": "https://www.sozcu.com.tr/kategori/yazarlar/deniz-zeyrek/?utm_source=yazardetay&utm_medium=free&utm_campaign=yazar_tumyazilar",
+        "url": "https://www.sozcu.com.tr/kategori/yazarlar/deniz-zeyrek/?utm_source=yazardetay&utm_medium=free"
+               "&utm_campaign=yazar_tumyazilar",
         "parser": "parse_sozcu",
     },
     "Dilek-Gungor": {
@@ -161,3 +180,10 @@ SOURCE_MAP = {
         "parser": "parse_hurriyet",
     },
 }
+
+# Error handling for missing URLs or parsers
+for source in SOURCES:
+    if source not in SOURCE_MAP:
+        raise ValueError(f"Missing URL or parser for source: {source}")
+    if "url" not in SOURCE_MAP[source] or "parser" not in SOURCE_MAP[source]:
+        raise ValueError(f"Missing URL or parser for source: {source}")

@@ -19,7 +19,13 @@ logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s -
 
 
 def load_past_articles():
-    """Load past articles from a file."""
+    """
+    Load past articles from a file.
+
+    Returns:
+    dict: A dictionary where the keys are source names and the values are sets of tuples. Each tuple contains a link
+    and a date.
+    """
     past_articles = {}
     try:
         with open(PAST_ARTICLES_FILE, 'r') as f:
@@ -32,7 +38,13 @@ def load_past_articles():
 
 
 def save_past_articles(past_articles):
-    """Save past articles to a file."""
+    """
+    Save past articles to a file.
+
+    Parameters:
+    past_articles (dict): A dictionary where the keys are source names and the values are sets of tuples. Each tuple
+    contains a link and a date.
+    """
     with open(PAST_ARTICLES_FILE, 'w') as f:
         for source, articles in past_articles.items():
             for link, date in articles:

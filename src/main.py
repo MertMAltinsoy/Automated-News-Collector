@@ -3,8 +3,8 @@ import logging
 import os
 import openpyxl
 from news_fetcher import fetch_news
-from excel_writer import save_articles
-from src.config import SOURCES, Up_To_Date_NEWS_FILE
+from config import SOURCES, Up_To_Date_NEWS_FILE
+from src.excel_writer import save_articles
 from utils import load_past_articles, save_past_articles
 
 # Configure the logging system
@@ -12,19 +12,43 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 
 
 def is_new_day(current_date, last_reset_date):
-    """Check if the current date is a new day."""
+    """
+    Check if the current date is a new day compared to the last reset date.
+
+    Args:
+    current_date (str): The current date in the format "dd-mm-yy".
+    last_reset_date (str): The date of the last reset in the format "dd-mm-yy".
+
+    Returns:
+    bool: True if the current date is a new day, False otherwise.
+    """
     return current_date != last_reset_date
 
 
 def reset_daily_updates_sheet(workbook, sheet_name):
-    """Reset the 'Daily-Updates' sheet because a new day has started."""
+    """
+    Reset the 'Daily-Updates' sheet because a new day has started.
+
+    Args:
+    workbook (openpyxl.workbook.workbook.Workbook): The workbook where the sheet is located.
+    sheet_name (str): The name of the sheet to be reset.
+    """
     logging.info(f"Resetting the 'Daily-Updates' sheet because a new day has started.")
     del workbook[sheet_name]
     workbook.save(Up_To_Date_NEWS_FILE)
 
 
 def process_articles(source, past_articles):
-    """Fetch and process new articles for a given source."""
+    """
+    Fetch and process new articles for a given source.
+
+    Args:
+    source (str): The name of the news source.
+    past_articles (dict): A dictionary containing past articles for each source.
+
+    Returns:
+    list: A list of tuples containing the source, title, and link of new articles.
+    """
     current_articles = fetch_news(source)
     new_articles = [article for article in current_articles if
                     (article[1], article[2]) not in past_articles.get(source, set())]
@@ -44,7 +68,9 @@ def process_articles(source, past_articles):
 
 
 def main():
-    """Main function."""
+    """
+    Main function that fetches news from each source, saves new articles, and updates the Excel file.
+    """
     # Get the current date
     current_date = datetime.datetime.now().strftime("%d-%m-%y")
 
@@ -68,6 +94,7 @@ def main():
     save_past_articles(past_articles)
     # Save the daily updates articles to the daily updates sheet
     daily_updates_articles = [(author.replace('-', ' '), title, link) for author, title, link in daily_updates_articles]
+    logging.debug(f"Successfully fetched {len(daily_updates_articles)} articles dated {current_date}.")
     save_articles(daily_updates_articles, f"Daily-Updates-{current_date}")
 
 

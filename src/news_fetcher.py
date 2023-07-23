@@ -3,11 +3,19 @@ import requests
 from bs4 import BeautifulSoup
 import logging
 from datetime import datetime
-from src.config import SOURCE_MAP
+from config import SOURCE_MAP
 
 
 def convert_turkish_date_to_datetime(date_string):
-    """Convert a Turkish date string to a datetime object."""
+    """
+    Convert a Turkish date string to a datetime object.
+
+    Parameters:
+    date_string (str): The Turkish date string to convert.
+
+    Returns:
+    str: The converted date string in the format 'dd-mm-yy'.
+    """
     # Map of Turkish month names to English
     turkish_to_numeric_months = {
         'Ocak': '01',
@@ -32,7 +40,15 @@ def convert_turkish_date_to_datetime(date_string):
 
 
 def get_soup(url):
-    """Send a GET request to a URL and return a BeautifulSoup object of the HTML content."""
+    """
+    Send a GET request to a URL and return a BeautifulSoup object of the HTML content.
+
+    Parameters:
+    url (str): The URL to send the GET request to.
+
+    Returns:
+    BeautifulSoup: A BeautifulSoup object of the HTML content of the response.
+    """
     try:
         response = requests.get(url)
         response.raise_for_status()
@@ -45,7 +61,15 @@ def get_soup(url):
 
 # Parser functions for each news site
 def parse_hurriyet(soup):
-    """Parse the HTML of Hurriyet's page."""
+    """
+    Parse the HTML of Hürriyet's page.
+
+    Parameters:
+    soup (BeautifulSoup): A BeautifulSoup object of the HTML content of the page.
+
+    Returns:
+    list: A list of tuples, where each tuple contains the title, link, and date of an article.
+    """
     news_items = soup.find_all('div', class_='highlighted-box mb20')
     articles = []
     for news_item in news_items:
@@ -66,7 +90,15 @@ def parse_hurriyet(soup):
 
 
 def parse_sabah(soup):
-    """Parse the HTML of Sabah's page."""
+    """
+    Parse the HTML of Sabah's page.
+
+    Parameters:
+    soup (BeautifulSoup): A BeautifulSoup object of the HTML content of the page.
+
+    Returns:
+    list: A list of tuples, where each tuple contains the title, link, and date of an article.
+    """
     news_items = soup.find('div', class_='col-sm-12 view20').find_all('div', class_='col-sm-12')
     articles = []
     for news_item in news_items:
@@ -83,7 +115,15 @@ def parse_sabah(soup):
 
 
 def parse_sozcu(soup):
-    """Parse the HTML of Sozcu's page."""
+    """
+    Parse the HTML of Sözcü's page.
+
+    Parameters:
+    soup (BeautifulSoup): A BeautifulSoup object of the HTML content of the page.
+
+    Returns:
+    list: A list of tuples, where each tuple contains the title, link, and date of an article.
+    """
     news_items = soup.find('div', class_='col-lg-8').find_all('a', class_='archive-item')
     articles = []
     for news_item in news_items:
@@ -99,7 +139,15 @@ def parse_sozcu(soup):
 
 
 def parse_ekonomim(soup):
-    """Parse the HTML of Ekonomim's page."""
+    """
+    Parse the HTML of Ekonomim's page.
+
+    Parameters:
+    soup (BeautifulSoup): A BeautifulSoup object of the HTML content of the page.
+
+    Returns:
+    list: A list of tuples, where each tuple contains the title, link, and date of an article.
+    """
     news_items = soup.find('div', class_='col-12 col-lg mw0 author-article_list').find_all('div', class_='left-side')
     articles = []
     for news_item in news_items:
@@ -114,7 +162,15 @@ def parse_ekonomim(soup):
 
 
 def parse_10haber(soup):
-    """Parse the HTML of 10haber's page."""
+    """
+    Parse the HTML of 10Haber's page.
+
+    Parameters:
+    soup (BeautifulSoup): A BeautifulSoup object of the HTML content of the page.
+
+    Returns:
+    list: A list of tuples, where each tuple contains the title, link, and date of an article.
+    """
     news_items = soup.find_all('p', class_='card-text')
     articles = []
     for news_item in news_items:
@@ -131,7 +187,15 @@ def parse_10haber(soup):
 
 
 def parse_gazeteoksijen(soup):
-    """Parse the HTML of GazeteOksijen's page."""
+    """
+    Parse the HTML of GazeteOksijen's page.
+
+    Parameters:
+    soup (BeautifulSoup): A BeautifulSoup object of the HTML content of the page.
+
+    Returns:
+    list: A list of tuples, where each tuple contains the title, link, and date of an article.
+    """
     news_items = soup.find_all('div', class_='col-12 col-md-6')
     articles = []
     for news_item in news_items:
@@ -149,7 +213,15 @@ def parse_gazeteoksijen(soup):
 
 
 def parse_mahfiegilmez(soup):
-    """Parse the HTML of MahfiEğilmez's page."""
+    """
+    Parse the HTML of MahfiEğilmez's page.
+
+    Parameters:
+    soup (BeautifulSoup): A BeautifulSoup object of the HTML content of the page.
+
+    Returns:
+    list: A list of tuples, where each tuple contains the title, link, and date of an article.
+    """
     articles = []
     # Parse the top news
     top_news_item = soup.find('article', class_='post')
@@ -186,7 +258,15 @@ def parse_mahfiegilmez(soup):
 
 
 def parse_haberturk(soup):
-    """Parse the HTML of HaberTürk's page."""
+    """
+    Parse the HTML of HaberTürk's page.
+
+    Parameters:
+    soup (BeautifulSoup): A BeautifulSoup object of the HTML content of the page.
+
+    Returns:
+    list: A list of tuples, where each tuple contains the title, link, and date of an article.
+    """
     news_items = soup.find_all('li', {'class': 'mb-16 pb-8 border-b dark:border-gray-800'})
 
     articles = []
@@ -213,7 +293,15 @@ def parse_haberturk(soup):
 
 
 def parse_yetkinreport(soup):
-    """Parse the HTML of Yetkinreport's page."""
+    """
+    Parse the HTML of YetkinReport's page.
+
+    Parameters:
+    soup (BeautifulSoup): A BeautifulSoup object of the HTML content of the page.
+
+    Returns:
+    list: A list of tuples, where each tuple contains the title, link, and date of an article.
+    """
     articles = []
     # Parse the top news
     top_news_items = soup.find_all('div', class_='kl-blog-item-container')
@@ -233,7 +321,15 @@ def parse_yetkinreport(soup):
 
 
 def parse_perspektif(soup):
-    """Parse the HTML of Perspektif's page."""
+    """
+    Parse the HTML of Perspektif's page.
+
+    Parameters:
+    soup (BeautifulSoup): A BeautifulSoup object of the HTML content of the page.
+
+    Returns:
+    list: A list of tuples, where each tuple contains the title, link, and date of an article.
+    """
     news_items = soup.find_all('div', class_=['box', 'three', 'small', 'box'])
     articles = []
     for news_item in news_items:
@@ -255,7 +351,15 @@ def parse_perspektif(soup):
 
 
 def parse_paraanaliz(soup):
-    """Parse the HTML of Paraanaliz's page."""
+    """
+    Parse the HTML of Paraanaliz's page.
+
+    Parameters:
+    soup (BeautifulSoup): A BeautifulSoup object of the HTML content of the page.
+
+    Returns:
+    list: A list of tuples, where each tuple contains the title, link, and date of an article.
+    """
     news_items = soup.find_all('li')
     articles = []
     for news_item in news_items:
@@ -272,7 +376,15 @@ def parse_paraanaliz(soup):
 
 
 def parse_ugurses(soup):
-    """Parse the HTML of Ugur Gurses's page."""
+    """
+    Parse the HTML of UgurGürses's page.
+
+    Parameters:
+    soup (BeautifulSoup): A BeautifulSoup object of the HTML content of the page.
+
+    Returns:
+    list: A list of tuples, where each tuple contains the title, link, and date of an article.
+    """
     news_items = soup.find('article')
     articles = []
     title_tag = news_items.find('h2', class_='entry-title').find('a')
@@ -287,7 +399,10 @@ def parse_ugurses(soup):
     return articles
 
 
+#  For a new Parser function addition, add the name of the function with its string value to the below
+#  parsers list. Do NOT forget to implement the actual corresponding parser function as well.
 parsers = {
+
     'parse_hurriyet': parse_hurriyet,
     'parse_sabah': parse_sabah,
     'parse_sozcu': parse_sozcu,
@@ -304,7 +419,15 @@ parsers = {
 
 
 def fetch_news(source):
-    """Fetch news from a specific source."""
+    """
+    Fetch news from a specific source.
+
+    Parameters:
+    source (str): The name of the news source to fetch news from.
+
+    Returns:
+    list: A list of tuples, where each tuple contains the title, link, and date of an article.
+    """
     if source in SOURCE_MAP:
         url = SOURCE_MAP[source]["url"]
         parser = parsers[SOURCE_MAP[source]["parser"]]
@@ -315,145 +438,3 @@ def fetch_news(source):
     else:
         logging.error(f"Unknown source: {source}")
         return []
-
-
-def parse_nagehan_alci(soup):  # Not used
-    """Parse the HTML of Nagehan Alçı's page."""
-    news_items = soup.find_all('li', class_=['w-full border-dotted mb-5 pb-5 border-b dark:border-gray-800'])
-    articles = []
-    for news_item in news_items:
-        title_tag = news_item.find('span', class_='block font-black mb-2.5')
-        link_tag = news_item.find('a',
-                                  class_='inline-block font-bold py-2.5 px-7 text-center border dark:border-gray-800')
-        if title_tag and link_tag:
-            title = title_tag.text
-            link = "https://www.haberturk.com" + link_tag['href']
-            articles.append((title, link))
-    return articles
-
-
-def parse_dilek_gungor(soup):  # Not used
-    """Parse the HTML of Dilek Güngör's page."""
-    target_div = soup.find('div', class_='col-sm-12 view20')
-    news_items = target_div.find_all('div', class_='col-sm-12')
-    articles = []
-    for news_item in news_items:
-        title_tag = news_item.find('strong', class_='postCaption')
-        link_tag = news_item.find('a', href=True)
-        if title_tag and link_tag:
-            title = title_tag.text
-            link = "https://www.sabah.com.tr" + link_tag['href']
-            articles.append((title, link))
-    return articles
-
-
-def parse_deniz_zeyrek(soup):  # Not used
-    """Parse the HTML of Deniz Zeyrek's page."""
-    news_items = soup.find('div', class_='col-lg-8').find_all('a', class_='archive-item')
-    articles = []
-    for news_item in news_items:
-        title_tag = news_item.find('span', class_='title')
-        date_tag = news_item.find('span', class_='date')
-        link_tag = news_item['href']
-        if title_tag and date_tag and link_tag:
-            title = title_tag.text
-            link = link_tag
-            articles.append((title, link))
-    return articles
-
-
-def parse_sant_manukyan(soup):  # Not used
-    """Parse the HTML of Sant Manukyan's page."""
-    news_items = soup.find('div', class_='col-12 col-lg mw0 author-article_list').find_all('div', class_='left-side')
-    articles = []
-    for news_item in news_items:
-        title_tag = news_item.find('a')
-        if title_tag:
-            title = title_tag.text
-            link = title_tag['href']
-            articles.append((title, link))
-    return articles
-
-
-def parse_reuters(soup):  # Not used
-    """Parse the HTML of the Reuters finance page."""
-    news_items = soup.find_all('li', class_=['story-collection__story__LeZ29', 'story-collection__hero__2gK6-'])
-    articles = []
-    for news_item in news_items:
-        title_tag = news_item.find('h3')
-        if title_tag:
-            title = title_tag.text
-            link = "https://www.reuters.com" + news_item.find('a')['href']
-            articles.append((title, link))
-    return articles
-
-
-def parse_bloomberg_markets(soup):  # Not used, Not included in prod. due to CAPTCHA issues
-    """Parse the HTML of the Bloomberg Markets page."""
-    articles = []
-    # Parse the big news item
-    big_news_item = soup.find('div', attrs={'class': 'hover:underline focus:underline', 'data-component': 'headline'})
-    if big_news_item:
-        big_news_link = big_news_item.find('a')['href']
-        big_news_title = big_news_item.text
-        articles.append((big_news_title, big_news_link))
-
-    # Parse the small news items
-    small_news_items = soup.find_all('div', class_='styles_storyBlock__l5VzV')
-    for news_item in small_news_items:
-        title_tag = news_item.find('div',
-                                   attrs={'class': 'hover:underline focus:underline', 'data-component': 'headline'})
-        if title_tag:
-            title = title_tag.text
-            link = title_tag.find('a')['href']
-            articles.append((title, link))
-
-    return articles
-
-
-def parse_bloomberg_economics(soup):  # Not used
-    """Parse the HTML of the Bloomberg Economics page."""
-    articles = []
-
-    # Parse the big news item
-    big_news_item = soup.find('h1')
-    if big_news_item:
-        big_news_link_tag = soup.find('a', {'class': 'lede-text-v2__hed-link'})
-        if big_news_link_tag:  # Check if the link tag is found
-            big_news_link = big_news_link_tag['href']
-            big_news_title = big_news_item.text
-            articles.append((big_news_title, big_news_link))
-
-    # Parse the small news items
-    small_news_items = soup.find_all('div', class_='story-package-module__story__headline-link')
-    for news_item in small_news_items:
-        title_tag = news_item.find('a')
-        if title_tag:
-            title = title_tag.text
-            link = title_tag['href']
-            articles.append((title, link))
-
-    return articles
-
-
-def parse_bloomberg_ai(soup):  # Not used
-    """Parse the HTML of the Bloomberg AI page."""
-    articles = []
-
-    # Parse the big news item
-    big_news_item = soup.find('section', class_='styles_SingleStoryCitylabVertical___9BKl')
-    if big_news_item:
-        big_news_link = big_news_item.find('a')['href']
-        big_news_title = big_news_item.find('div', class_='hover:underline focus:underline').text
-        articles.append((big_news_title, big_news_link))
-
-    # Parse the small news items
-    small_news_items = soup.find_all('div', class_='styles_storyBlock__l5VzV')
-    for news_item in small_news_items:
-        title_tag = news_item.find('div', class_='hover:underline focus:underline')
-        if title_tag:
-            title = title_tag.text
-            link = title_tag.find('a')['href']
-            articles.append((title, link))
-
-    return articles
