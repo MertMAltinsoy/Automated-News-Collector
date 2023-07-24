@@ -432,6 +432,9 @@ def fetch_news(source):
         url = SOURCE_MAP[source]["url"]
         parser = parsers[SOURCE_MAP[source]["parser"]]
         soup = get_soup(url)
+        if soup is None:
+            logging.error("Failed to fetch articles: No internet connection, invalid URL, or other network issue.")
+            return []
         articles = parser(soup)
         logging.debug(f"Fetched {len(articles)} articles from {source}.")
         return articles
