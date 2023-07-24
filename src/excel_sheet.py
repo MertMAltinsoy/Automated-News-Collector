@@ -4,7 +4,7 @@ import logging
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
 
-from src.article_source import add_headers, add_source_header, adjust_color, get_source_and_headers
+from article_source import add_headers, add_source_header, adjust_color, get_source_and_headers
 
 
 def create_workbook():

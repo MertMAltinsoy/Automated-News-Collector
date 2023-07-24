@@ -4,7 +4,7 @@ import os
 import openpyxl
 from news_fetcher import fetch_news
 from config import SOURCES, Up_To_Date_NEWS_FILE
-from src.excel_writer import save_articles
+from excel_writer import save_articles
 from utils import load_past_articles, save_past_articles
 
 # Configure the logging system
