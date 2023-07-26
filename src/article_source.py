@@ -39,8 +39,18 @@ def add_source_header(sheet, source, sourceColor):
         None
     """
     stripped_source = replace_dash_with_space(source)
-    sheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=3)
-    source_cell = sheet.cell(row=1, column=1, value=stripped_source)
+    if source.startswith("Daily-Updates"):
+        sheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=3)
+        source_cell = sheet.cell(row=1, column=1, value=stripped_source)
+    else:
+        sheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=2)
+        source_cell = sheet.cell(row=1, column=1, value=stripped_source)
+        return_cell = sheet.cell(row=1, column=3, value="Return to Index")
+        return_cell.hyperlink = '#Index!A1'
+        return_cell.font = Font(color='0000EE', underline='single', size=12)  # Blue, underlined text
+        return_cell.fill = PatternFill(start_color='808080', end_color='808080', fill_type='solid')  # Light gray fill
+        return_cell.alignment = Alignment(horizontal='center', vertical='center')
+
     source_cell.font = Font(bold=True, color='FFFFFF', size=16)
     source_cell.fill = PatternFill(start_color=sourceColor, end_color=sourceColor, fill_type='solid')
     source_cell.alignment = Alignment(horizontal='center', vertical='center')

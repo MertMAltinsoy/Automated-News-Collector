@@ -16,24 +16,24 @@ def convert_turkish_date_to_datetime(date_string):
     Returns:
     str: The converted date string in the format 'dd-mm-yy'.
     """
-    # Map of Turkish month names to English
+    # Map of Turkish month names and abbreviations to English
     turkish_to_numeric_months = {
-        'Ocak': '01',
-        'Şubat': '02',
-        'Mart': '03',
-        'Nisan': '04',
-        'Mayıs': '05',
-        'Haziran': '06',
-        'Temmuz': '07',
-        'Ağustos': '08',
-        'Eylül': '09',
-        'Ekim': '10',
-        'Kasım': '11',
-        'Aralık': '12'
+        'Ocak': '01', 'Oca': '01',
+        'Şubat': '02', 'Şub': '02',
+        'Mart': '03', 'Mar': '03',
+        'Nisan': '04', 'Nis': '04',
+        'Mayıs': '05', 'May': '05',
+        'Haziran': '06', 'Haz': '06',
+        'Temmuz': '07', 'Tem': '07',
+        'Ağustos': '08', 'Ağu': '08',
+        'Eylül': '09', 'Eyl': '09',
+        'Ekim': '10', 'Eki': '10',
+        'Kasım': '11', 'Kas': '11',
+        'Aralık': '12', 'Ara': '12'
     }
     # Split the date string into day, month, and year
     day, month, year = date_string.split()
-    # Convert the Turkish month name to Numeric
+    # Convert the Turkish month name or abbreviation to Numeric
     month = turkish_to_numeric_months[month]
     # Combine the day, month, and year into a new date string
     return f"{day}-{month}-{year[2:]}"
@@ -50,7 +50,11 @@ def get_soup(url):
     BeautifulSoup: A BeautifulSoup object of the HTML content of the response.
     """
     try:
-        response = requests.get(url)
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
+                          'Chrome/58.0.3029.110 Safari/537.3 '
+        }
+        response = requests.get(url, headers=headers)
         response.raise_for_status()
     except requests.RequestException as e:
         logging.error(f"Failed to fetch news: {e}")
@@ -377,7 +381,7 @@ def parse_paraanaliz(soup):
 
 def parse_ugurses(soup):
     """
-    Parse the HTML of UgurGürses's page.
+    Parse the HTML of UğurGürses's page.
 
     Parameters:
     soup (BeautifulSoup): A BeautifulSoup object of the HTML content of the page.
@@ -385,11 +389,11 @@ def parse_ugurses(soup):
     Returns:
     list: A list of tuples, where each tuple contains the title, link, and date of an article.
     """
-    news_items = soup.find('article')
+    news_item = soup.find('article')
     articles = []
-    title_tag = news_items.find('h2', class_='entry-title').find('a')
+    title_tag = news_item.find('h2', class_='entry-title').find('a')
     link_tag = title_tag
-    date_tag = news_items.find('span', class_='posted-on').find('time', class_='entry-date published')
+    date_tag = news_item.find('span', class_='posted-on').find('time', class_='entry-date published')
     if title_tag and link_tag and date_tag:
         title = title_tag.text
         link = link_tag['href']
@@ -399,10 +403,143 @@ def parse_ugurses(soup):
     return articles
 
 
+def parse_yenisafak(soup):
+    """
+    Parse the HTML of Yenişafak's page.
+
+    Parameters:
+    soup (BeautifulSoup): The BeautifulSoup object containing the HTML content of the author's page.
+
+    Returns:
+    list: A list of tuples, where each tuple contains the title, link, and date of an article.
+    """
+    articles = []
+    # First, find the parent element
+    left_content = soup.find('div', class_='left-content')
+
+    # Check if the parent element was found
+    if left_content is not None:
+        # Then, find the news items within the 'cards-list' element
+        news_items = left_content.find_all('div', class_='ys-link')
+    else:
+        # If the parent element was not found, log an error and set news_items to an empty list
+        logging.error('Failed to find left-content element')
+        news_items = []
+    for item in news_items:
+        h2 = item.find('h2')
+        # Check if the h2 element was found
+        if h2 is not None:
+            title = h2.text.strip()
+            link = "https://www.yenisafak.com" + item.find('a')['href']
+            date = item.find('p', class_='date').text.strip()
+            # Split the date string into its components
+            components = date.split()
+            # Remove the comma from the year
+            components[2] = components[2].replace(',', '')
+            # Reorder the components and join them back into a string
+            date = ' '.join([components[1], components[0], components[2]])
+            try:
+                date = convert_turkish_date_to_datetime(date)  # format the date as 'dd-mm-yy'
+            except KeyError as e:
+                logging.error(f"Failed to convert date: {date}. Error: {e}")
+                continue
+            articles.append((title, link, date))
+        else:
+            # If the h2 element was not found, log a debug message
+            logging.debug('Found a ys-link element without an h2 element')
+
+    return articles
+
+
+def parse_birgun(soup):
+    """
+    Parse the HTML of Birgün's page.
+
+    Parameters:
+    soup (BeautifulSoup): A BeautifulSoup object of the HTML content of the page.
+
+    Returns:
+    list: A list of tuples, where each tuple contains the title, link, and date of an article.
+    """
+    news_items = soup.find_all('div', class_='col-12')
+    articles = []
+    for news_item in news_items:
+        title_tag = news_item.find('h5', class_='card-title')
+        if title_tag:
+            title_tag = title_tag.find('a')
+        date_tag = news_item.find('li', class_='nav-item no-line')
+        if title_tag and date_tag:
+            title = title_tag.text
+            link = "https://www.birgun.net" + title_tag['href']
+            date = datetime.strptime(date_tag.text, '%d.%m.%Y %H:%M')
+            date = date.strftime('%d-%m-%y')  # format the date as 'dd-mm-yy'
+            articles.append((title, link, date))
+    return articles
+
+
+def parse_gazeteduvar(soup):
+    """
+    Parse the HTML of GazeteDuvar's page.
+
+    Parameters:
+    soup (BeautifulSoup): A BeautifulSoup object of the HTML content of the page.
+
+    Returns:
+    list: A list of tuples, where each tuple contains the title, link, and date of an article.
+    """
+    articles = []
+    news_items = soup.find_all('div', class_='col-12 col-md-6')
+    for item in news_items:
+        date_tag = item.find('span', class_='time')
+        link_tag = item.find('a')
+        if date_tag and link_tag:
+            date = date_tag.text.replace(',', '').strip()  # remove commas and leading/trailing whitespaces
+            date = date.split(' ')[1:]  # remove the day of the week
+            date = ' '.join(date)  # join the remaining parts
+            date = convert_turkish_date_to_datetime(date)  # convert the date to 'dd-mm-yy' format
+            title = link_tag['title']
+            link = link_tag['href']
+            articles.append((title, link, date))
+    return articles
+
+
+def parse_t24(soup):
+    """
+    Parse articles from T24.
+
+    Parameters:
+    soup (BeautifulSoup): The BeautifulSoup object containing the HTML content of the author's page.
+
+    Returns:
+    list: A list of tuples, where each tuple contains the title, link, and date of an article.
+    """
+    articles = []
+    # First, find the parent element
+    parent_element = soup.find('div', class_='col-md-8 col-sm-12 col-xs-12')
+    # Check if the parent element was found
+    if parent_element is not None:
+        # Then, find the news items within the '1fE_V' element
+        news_items = parent_element.find('div', class_='_2Mepd').find_all('div', class_='_1fE_V')
+    else:
+        # If the parent element was not found, log an error and set news_items to an empty list
+        logging.error('Failed to find parent element')
+        news_items = []
+    for item in news_items:
+        date_tag = item.find('div', class_='_2J9OF col-sm-3 col-xs-12').find_all('p')[-1]
+        link_tag = item.find('div', class_='_31Tbh col-sm-9 col-xs-12').find('h3').find('a')
+        if date_tag and link_tag:
+            date = date_tag.text.strip()
+            date = convert_turkish_date_to_datetime(date)
+            title = link_tag.text.strip()
+            link = "https://t24.com.tr" + link_tag['href']
+            articles.append((title, link, date))
+
+    return articles
+
+
 #  For a new Parser function addition, add the name of the function with its string value to the below
 #  parsers list. Do NOT forget to implement the actual corresponding parser function as well.
 parsers = {
-
     'parse_hurriyet': parse_hurriyet,
     'parse_sabah': parse_sabah,
     'parse_sozcu': parse_sozcu,
@@ -414,7 +551,11 @@ parsers = {
     'parse_yetkinreport': parse_yetkinreport,
     'parse_perspektif': parse_perspektif,
     'parse_paraanaliz': parse_paraanaliz,
-    'parse_ugurses': parse_ugurses
+    'parse_ugurses': parse_ugurses,
+    'parse_yenisafak': parse_yenisafak,
+    'parse_birgun': parse_birgun,
+    'parse_gazeteduvar': parse_gazeteduvar,
+    'parse_t24': parse_t24
 }
 
 

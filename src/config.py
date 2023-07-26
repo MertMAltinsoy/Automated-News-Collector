@@ -1,4 +1,3 @@
-# config.py
 import os
 from utils import DATA_DIR
 
@@ -25,8 +24,8 @@ DESKTOP_DIR = os.path.join(os.path.expanduser("~"), "Desktop")
 SAVE_ON_DESKTOP = True
 
 # Path to the Excel file
-Up_To_Date_NEWS_FILE = os.path.join(DESKTOP_DIR, 'Up_To_Date_NEWS.xlsx') if SAVE_ON_DESKTOP else os.path.join(DATA_DIR, 'Up_To_Date_NEWS.xlsx')
-
+Up_To_Date_NEWS_FILE = os.path.join(DESKTOP_DIR, 'Up_To_Date_NEWS.xlsx') if SAVE_ON_DESKTOP else os.path.join(DATA_DIR,
+                                                                                                              'Up_To_Date_NEWS.xlsx')
 
 """
 Configuration for Automated-News-Collector Sources:
@@ -59,37 +58,43 @@ structures.
 # List of sources to scrape
 SOURCES = [
     "Abdulkadir-Selvi", "Seref-Oguz", "Alaattin-Aktas", "Barıs-Soydan",
-    "Deniz-Zeyrek", "Dilek-Gungor", "Fatih-Ozatay", "Haluk-Burumcekci",
-    "Hande-Fırat", "Kerem-Alkin", "Mahfi-Egilmez", "Muharrem-Sarıkaya",
-    "Murat-Yetkin", "Nagehan-Alci", "Okan-Muderrisoglu", "Ugur-Gürses",
+    "Deniz-Zeyrek", "Dilek-Gungor", "Ugur-Gürses", "Fatih-Ozatay",
+    "Haluk-Burumcekci", "Hande-Fırat", "Kerem-Alkin", "Mahfi-Egilmez",
+    "Muharrem-Sarıkaya", "Murat-Yetkin", "Nagehan-Alci", "Okan-Muderrisoglu",
     "Kerim-Rota", "Sant-Manukyan", "Atilla-Yesilada", "Zeynep-Gurcanli",
-    "Sedat-Ergin"
+    "Sedat-Ergin", "Levent-Yılmaz", "Erdal-Tanas-Karagol", "Merdan-Yanardag",
+    "Ali-Rıza-Güngen", "Mehmet-Yılmaz"
 ]
 
 # Color assignments for each source
 COLORS = {
-    "Daily-Updates": "FFD700",  # Special visually appealing color (Gold)
-    "Abdulkadir-Selvi": "D2B48C",  # Tan (Cream/Beige)
-    "Seref-Oguz": "F0E68C",  # Khaki
-    "Alaattin-Aktas": "CD853F",  # Peru
-    "Barıs-Soydan": "BC8F8F",  # Rosy Brown
-    "Deniz-Zeyrek": "FFA07A",  # Light Salmon
-    "Dilek-Gungor": "90EE90",  # Light Green
-    "Fatih-Ozatay": "00CED1",  # Dark Turquoise
-    "Haluk-Burumcekci": "FF8C00",  # Dark Orange
-    "Hande-Fırat": "1E90FF",  # Dodger Blue
-    "Kerem-Alkin": "9370DB",  # Medium Purple
-    "Mahfi-Egilmez": "BA55D3",  # Medium Orchid
-    "Muharrem-Sarıkaya": "FF69B4",  # Hot Pink
-    "Murat-Yetkin": "FF4500",  # Orange Red
-    "Nagehan-Alci": "FFDAB9",  # Peach Puff
-    "Okan-Muderrisoglu": "EEE8AA",  # Pale Goldenrod
-    "Ugur-Gürses": "BDB76B",  # Dark Khaki
-    "Kerim-Rota": "6B8E23",  # Olive Drab
-    "Sant-Manukyan": "8FBC8F",  # Dark Sea Green
-    "Atilla-Yesilada": "20B2AA",  # Light Sea Green
-    "Zeynep-Gurcanli": "87CEFA",  # Light Sky Blue
-    "Sedat-Ergin": "8470FF",  # Light Slate Blue
+    "Daily-Updates": "FFD700",  # Gold
+    "Abdulkadir-Selvi": "483D8B",  # Dark Slate Blue
+    "Seref-Oguz": "6A5ACD",  # Slate Blue
+    "Alaattin-Aktas": "7B68EE",  # Medium Slate Blue
+    "Barıs-Soydan": "9370DB",  # Medium Purple
+    "Deniz-Zeyrek": "BA55D3",  # Medium Orchid
+    "Dilek-Gungor": "DA70D6",  # Orchid
+    "Fatih-Ozatay": "EE82EE",  # Violet
+    "Haluk-Burumcekci": "FF00FF",  # Magenta
+    "Hande-Fırat": "FF1493",  # Deep Pink
+    "Kerem-Alkin": "FF69B4",  # Hot Pink
+    "Mahfi-Egilmez": "FFB6C1",  # Light Pink
+    "Muharrem-Sarıkaya": "FFA07A",  # Light Salmon
+    "Murat-Yetkin": "FA8072",  # Salmon
+    "Nagehan-Alci": "E9967A",  # Dark Salmon
+    "Okan-Muderrisoglu": "F08080",  # Light Coral
+    "Ugur-Gürses": "CD5C5C",  # Indian Red
+    "Kerim-Rota": "B22222",  # Firebrick
+    "Sant-Manukyan": "A52A2A",  # Brown
+    "Atilla-Yesilada": "8B4513",  # Saddle Brown
+    "Zeynep-Gurcanli": "D2691E",  # Chocolate
+    "Sedat-Ergin": "CD853F",  # Peru
+    "Levent-Yılmaz": "DEB887",  # Burlywood
+    "Erdal-Tanas-Karagol": "F4A460",  # Sandy Brown
+    "Merdan-Yanardag": "D2B48C",  # Tan
+    "Ali-Rıza-Güngen": "BC8F8F",  # Rosy Brown
+    "Mehmet-Yılmaz": "A0522D",  # Sienna
 }
 
 # Dictionary mapping sources to their URLs and parser functions
@@ -179,6 +184,26 @@ SOURCE_MAP = {
         "url": "https://www.hurriyet.com.tr/yazarlar/sedat-ergin/",
         "parser": "parse_hurriyet",
     },
+    "Levent-Yılmaz": {
+        "url": "https://www.yenisafak.com/yazarlar/levent-yilmaz",
+        "parser": "parse_yenisafak",
+    },
+    "Erdal-Tanas-Karagol": {
+        "url": "https://www.yenisafak.com/yazarlar/erdal-tanas-karagol",
+        "parser": "parse_yenisafak",
+    },
+    "Merdan-Yanardag": {
+        "url": "https://www.birgun.net/profil/merdan-yanardag-360",
+        "parser": "parse_birgun",
+    },
+    "Ali-Rıza-Güngen": {
+        "url": "https://www.gazeteduvar.com.tr/yazar/ali-riza-gungen",
+        "parser": "parse_gazeteduvar",
+    },
+    "Mehmet-Yılmaz": {
+        "url": "https://t24.com.tr/yazarlar/mehmet-y-yilmaz",
+        "parser": "parse_t24",
+    }
 }
 
 # Error handling for missing URLs or parsers

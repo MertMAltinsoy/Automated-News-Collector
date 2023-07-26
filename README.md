@@ -65,6 +65,29 @@ The `config.py` file also contains the configurations for the news sources. Ther
 
 ## Adding New Sources
 
+### Currently Implemented Host Websites
+
+The following host websites are currently implemented in the project:
+
+- [Hurriyet](https://www.hurriyet.com.tr/)
+- [Sabah](https://www.sabah.com.tr/)
+- [Sozcu](https://www.sozcu.com.tr/)
+- [Ekonomim](http://www.ekonomim.com/)
+- [10Haber](https://www.10haber.com/)
+- [Gazete Oksijen](https://www.gazeteoksijen.com/)
+- [Mahfi Egilmez](https://www.mahfiegilmez.com/)
+- [Haberturk](https://www.haberturk.com/)
+- [Yetkin Report](https://yetkinreport.com/)
+- [Perspektif](https://perspektif.online/)
+- [Para Analiz](https://www.paraanaliz.com/)
+- [Ugur Gurses](https://ugurses.net/blog/)
+- [Yeni Safak](https://www.yenisafak.com/)
+- [Birgun](https://www.birgun.net/)
+- [Gazete Duvar](https://www.gazeteduvar.com.tr/)
+- [T24](https://t24.com.tr/)
+
+If you want to add a new author and their host website is already implemented, you can easily add them to the project.
+
 When adding a new source, make sure to:
 
 - Add the source name to the `SOURCES` list.

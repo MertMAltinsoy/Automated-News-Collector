@@ -1,4 +1,3 @@
-# excel_writer.py
 import logging
 import os
 

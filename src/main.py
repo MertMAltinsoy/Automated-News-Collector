@@ -5,6 +5,7 @@ import openpyxl
 from news_fetcher import fetch_news
 from config import SOURCES, Up_To_Date_NEWS_FILE
 from excel_writer import save_articles
+from excel_sheet import create_index_sheet
 from utils import load_past_articles, save_past_articles
 
 # Configure the logging system
@@ -60,7 +61,8 @@ def process_articles(source, past_articles):
         past_articles[source] = set((article[1], article[2]) for article in current_articles)
         # Add the new articles published today to the daily updates articles
         current_date = datetime.datetime.now().strftime("%d-%m-%y")
-        daily_updates_articles = [(source, article[0], article[1]) for article in new_articles if article[2] == current_date]
+        daily_updates_articles = [(source, article[0], article[1]) for article in new_articles if
+                                  article[2] == current_date]
         return daily_updates_articles
     else:
         logging.info(f"No new articles found from {source}.")
@@ -96,6 +98,7 @@ def main():
     daily_updates_articles = [(author.replace('-', ' '), title, link) for author, title, link in daily_updates_articles]
     logging.debug(f"Successfully fetched {len(daily_updates_articles)} articles dated {current_date}.")
     save_articles(daily_updates_articles, f"Daily-Updates-{current_date}")
+    create_index_sheet()
 
 
 if __name__ == "__main__":
