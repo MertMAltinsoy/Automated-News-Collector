@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import logging
 from datetime import datetime
 from config import SOURCE_MAP
+import random
 
 
 def convert_turkish_date_to_datetime(date_string):
@@ -39,6 +40,21 @@ def convert_turkish_date_to_datetime(date_string):
     return f"{day}-{month}-{year[2:]}"
 
 
+user_agents = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0',
+    'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36'
+]
+
+session = requests.Session()
+session.headers.update({
+    'User-Agent': random.choice(user_agents),
+    'Accept-Language': 'tr-TR,tr;q=0.9'
+})
+
+
 def get_soup(url):
     """
     Send a GET request to a URL and return a BeautifulSoup object of the HTML content.
@@ -50,11 +66,7 @@ def get_soup(url):
     BeautifulSoup: A BeautifulSoup object of the HTML content of the response.
     """
     try:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                          'Chrome/58.0.3029.110 Safari/537.3 '
-        }
-        response = requests.get(url, headers=headers)
+        response = session.get(url)
         response.raise_for_status()
     except requests.RequestException as e:
         logging.error(f"Failed to fetch news: {e}")
@@ -84,12 +96,18 @@ def parse_hurriyet(soup):
             title = title_tag.text
             link = "https://www.hurriyet.com.tr" + link_tag
             date_string = date_tag.text
-            # Split the date string by space and remove the time part
+            # Split the date string by space and remove the time part if it exists
             date_parts = date_string.split()
-            date_without_time = " ".join(date_parts[:-1])
-            # Convert the Turkish date to a datetime object
-            date = convert_turkish_date_to_datetime(date_without_time)
-            articles.append((title, link, date))
+            if len(date_parts) > 3:  # If the date string contains a time part
+                date_without_time = " ".join(date_parts[:-1])
+            else:
+                date_without_time = date_string
+            try:
+                # Convert the Turkish date to a datetime object
+                date = convert_turkish_date_to_datetime(date_without_time)
+                articles.append((title, link, date))
+            except ValueError:
+                logging.error(f"Failed to parse date: '{date_without_time}'")
     return articles
 
 
