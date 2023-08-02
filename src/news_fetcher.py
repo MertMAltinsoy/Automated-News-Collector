@@ -36,6 +36,8 @@ def convert_turkish_date_to_datetime(date_string):
     day, month, year = date_string.split()
     # Convert the Turkish month name or abbreviation to Numeric
     month = turkish_to_numeric_months[month]
+    # Ensure the day is two digits
+    day = day.zfill(2)
     # Combine the day, month, and year into a new date string
     return f"{day}-{month}-{year[2:]}"
 
@@ -482,7 +484,7 @@ def parse_birgun(soup):
     news_items = soup.find_all('div', class_='col-12')
     articles = []
     for news_item in news_items:
-        title_tag = news_item.find('h5', class_='card-title')
+        title_tag = news_item.find('h2', class_='card-title')
         if title_tag:
             title_tag = title_tag.find('a')
         date_tag = news_item.find('li', class_='nav-item no-line')
